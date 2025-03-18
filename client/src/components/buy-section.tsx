@@ -93,11 +93,21 @@ export default function BuySection() {
       });
 
       const result = await response.json();
-
-      toast({
-        title: "Purchase Successful",
-        description: `You have purchased ${formatNumber(hackAmount)} HACK tokens`
-      });
+      
+      // Update local balance display from the result
+      if (result.details && result.details.newBalance) {
+        // In a production app, we would update the global wallet state
+        // But for now we'll just show the toast with the new balance
+        toast({
+          title: "Purchase Successful",
+          description: `You have purchased ${formatNumber(hackAmount)} HACK tokens. New balance: ${formatNumber(result.details.newBalance)} HACK`
+        });
+      } else {
+        toast({
+          title: "Purchase Successful",
+          description: `You have purchased ${formatNumber(hackAmount)} HACK tokens`
+        });
+      }
 
       // Reset form
       setSolAmount("");

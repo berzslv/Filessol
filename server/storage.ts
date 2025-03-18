@@ -18,6 +18,7 @@ export interface IStorage {
   getUserByReferralCode(code: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   getUserReferrals(userId: number): Promise<Referral[]>;
+  updateUserBalance(userId: number, newBalance: string): Promise<User | undefined>;
   
   // Staking methods
   getStakingByUser(userId: number): Promise<Staking[]>;
@@ -99,6 +100,16 @@ export class MemStorage implements IStorage {
     return Array.from(this.referrals.values()).filter(
       (referral) => referral.referrerId === userId
     );
+  }
+  
+  async updateUserBalance(userId: number, newBalance: string): Promise<User | undefined> {
+    const user = this.users.get(userId);
+    if (user) {
+      const updatedUser = { ...user, walletBalance: newBalance };
+      this.users.set(userId, updatedUser);
+      return updatedUser;
+    }
+    return undefined;
   }
 
   // Staking methods

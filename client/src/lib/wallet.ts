@@ -135,10 +135,12 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
       localStorage.setItem("userId", user.id.toString());
       localStorage.setItem("referralCode", user.referralCode);
       
-      // Set mock balances
+      // Fetch real wallet balance or use a placeholder until connected to actual blockchain
+      // In a production app, this would fetch the actual balance from the blockchain
+      // For demonstration purposes, we're using a starting balance
       setBalance({
         sol: 14.5,
-        hack: Math.floor(Math.random() * 15000)
+        hack: user.walletBalance ? parseFloat(user.walletBalance) : 0
       });
       
       toast({

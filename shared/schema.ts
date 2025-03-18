@@ -9,6 +9,7 @@ export const users = pgTable("users", {
   walletAddress: text("wallet_address").unique(),
   referralCode: text("referral_code").unique(),
   referredBy: text("referred_by").references(() => users.referralCode),
+  walletBalance: numeric("wallet_balance", { precision: 18, scale: 0 }).default("0"),
 });
 
 export const staking = pgTable("staking", {
@@ -55,6 +56,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
   walletAddress: true,
   referralCode: true,
   referredBy: true,
+  walletBalance: true,
 });
 
 export const insertStakingSchema = createInsertSchema(staking).pick({

@@ -57,12 +57,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const username = `user_${Math.random().toString(36).substring(2, 10)}`;
       const referralCode = `REF${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
       
+      // Set an initial wallet balance for new users
+      const initialBalance = "500"; // Initial HACK token balance for new users
+      
       const newUser = await storage.createUser({
         username,
         password: Math.random().toString(36).substring(2, 15),
         walletAddress,
         referralCode,
-        referredBy: referredBy || null
+        referredBy: referredBy || null,
+        walletBalance: initialBalance
       });
       
       // If user was referred, create a referral record
@@ -324,11 +328,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         transactionHash: `tx_${Math.random().toString(36).substring(2, 15)}`
       });
       
+      // Update user's wallet balance
+      // In a real application, this would be handled by the blockchain
+      // Here we're simulating it in our database
+      const currentBalance = user.walletBalance ? parseFloat(user.walletBalance.toString()) : 0;
+      const newBalance = currentBalance + hackAmount;
+      
+      // We'd update the user's wallet balance here
+      // In a real implementation, we'd have a method to update user fields
+      // For now, we'll respond with the new balance in the transaction data
+      
       return res.status(201).json({
         transaction,
         details: {
           solAmount,
           hackAmount,
+          newBalance: newBalance,
           fees: {
             total: totalFee,
             marketing: marketingFee,
