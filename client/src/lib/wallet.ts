@@ -70,19 +70,21 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
       let walletAddress;
       
       try {
-        // Attempt to use WalletConnect with Solana chain
+        // Use WalletConnect with Solana chain
         const wcProvider = new WalletConnectProvider({
           rpc: {
             1: "https://api.mainnet-beta.solana.com",
           },
           qrcodeModalOptions: {
-            mobileLinks: ["phantom", "solflare"]
+            mobileLinks: ["phantom", "solflare"],
+            desktopLinks: ["phantom", "solflare"]
           },
-          // required
+          // Use bridge for WalletConnect v1 compatibility
           bridge: "https://bridge.walletconnect.org",
-          // required
-          chainId: 1
-          // Note: WalletConnect v1 doesn't use projectId directly
+          // Solana mainnet chainId
+          chainId: 1,
+          // Project ID from WalletConnect
+          projectId: "ff609a49d6c93e17be4b9c93f43d4e64"
         });
         
         setProvider(wcProvider);
@@ -93,13 +95,16 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
         if (wcProvider.accounts && wcProvider.accounts.length > 0) {
           walletAddress = wcProvider.accounts[0];
         } else {
-          // Fallback to mock address if actual connection fails
-          walletAddress = `0x${Math.random().toString(36).substring(2, 10)}...${Math.random().toString(36).substring(2, 6)}`;
+          throw new Error("No accounts found after connection");
         }
       } catch (err) {
         console.error("WalletConnect error:", err);
-        // Fallback to mock address if actual connection fails
-        walletAddress = `0x${Math.random().toString(36).substring(2, 10)}...${Math.random().toString(36).substring(2, 6)}`;
+        toast({
+          variant: "destructive",
+          title: "Connection Error",
+          description: "Failed to connect wallet. Please try again.",
+        });
+        throw err; // Re-throw to handle in the calling function
       }
       
       // Get URL params to check for referral
