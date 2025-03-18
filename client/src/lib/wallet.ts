@@ -7,7 +7,7 @@ interface WalletContextType {
   address: string | null;
   userId: number | null;
   referralCode: string | null;
-  connect: () => Promise<void>;
+  connect: (address: string, id: number, refCode: string) => void;
   disconnect: () => void;
   balance: {
     sol: number;
@@ -20,7 +20,7 @@ const WalletContext = createContext<WalletContextType>({
   address: null,
   userId: null,
   referralCode: null,
-  connect: async () => {},
+  connect: () => {},
   disconnect: () => {},
   balance: {
     sol: 0,
@@ -34,42 +34,40 @@ interface WalletProviderProps {
   children: ReactNode;
 }
 
+// Create PERSISTENT wallet state
+const getSavedWalletAddress = () => localStorage.getItem("walletAddress");
+const getSavedUserId = () => {
+  const id = localStorage.getItem("userId");
+  return id ? parseInt(id) : null;
+};
+const getSavedReferralCode = () => localStorage.getItem("referralCode");
+
 export const WalletProvider = ({ children }: WalletProviderProps) => {
-  const [connected, setConnected] = useState(false);
-  const [address, setAddress] = useState<string | null>(null);
-  const [userId, setUserId] = useState<number | null>(null);
-  const [referralCode, setReferralCode] = useState<string | null>(null);
+  // Initialize from localStorage immediately
+  const [connected, setConnected] = useState(() => !!getSavedWalletAddress());
+  const [address, setAddress] = useState<string | null>(() => getSavedWalletAddress());
+  const [userId, setUserId] = useState<number | null>(() => getSavedUserId());
+  const [referralCode, setReferralCode] = useState<string | null>(() => getSavedReferralCode());
+  
   // Default SOL balance set higher for demo purposes
   const [balance, setBalance] = useState({ sol: 25.0, hack: 0 });
   const { toast } = useToast();
-
-  // Initialize from localStorage if available
-  useEffect(() => {
-    const savedAddress = localStorage.getItem("walletAddress");
-    const savedUserId = localStorage.getItem("userId");
-    const savedReferralCode = localStorage.getItem("referralCode");
-    
-    if (savedAddress) {
-      setAddress(savedAddress);
-      setConnected(true);
-    }
-    
-    if (savedUserId) {
-      setUserId(parseInt(savedUserId));
-    }
-    
-    if (savedReferralCode) {
-      setReferralCode(savedReferralCode);
-    }
-  }, []);
   
   // Fetch user balance when userId changes or on connect
   useEffect(() => {
     async function fetchUserBalance() {
       if (userId) {
         try {
+          console.log("Fetching balance for user ID:", userId);
           const response = await apiRequest('GET', `/api/users/${userId}`);
+          
+          if (!response.ok) {
+            console.error("Failed to fetch user data:", response.status);
+            return;
+          }
+          
           const user = await response.json();
+          console.log("Got user data:", user);
           
           if (user && user.walletBalance) {
             setBalance(prev => ({
@@ -85,11 +83,23 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
     
     fetchUserBalance();
   }, [userId]);
-
-  // This function is simplified for the modal to call directly
-  const connect = async () => {
-    // This is now empty as we're handling connection in the modal
-    console.log("Connect function called, but connection is handled directly in modal.");
+  
+  // Direct connect function that can be called from modal
+  const connect = (walletAddress: string, id: number, refCode: string) => {
+    console.log(`Connecting wallet: address=${walletAddress}, id=${id}, refCode=${refCode}`);
+    
+    // Update state
+    setAddress(walletAddress);
+    setUserId(id);
+    setReferralCode(refCode);
+    setConnected(true);
+    
+    // This ensures localStorage is set properly
+    localStorage.setItem("walletAddress", walletAddress);
+    localStorage.setItem("userId", id.toString());
+    localStorage.setItem("referralCode", refCode);
+    
+    console.log("Wallet connected, localStorage set");
   };
 
   const disconnect = () => {

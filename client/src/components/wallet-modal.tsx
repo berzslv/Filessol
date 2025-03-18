@@ -11,6 +11,7 @@ interface WalletModalProps {
 }
 
 export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
+  const { connect } = useWallet();
   const { toast } = useToast();
   const [walletAddress, setWalletAddress] = useState("");
   const [loading, setLoading] = useState(false);
@@ -35,11 +36,10 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
       });
 
       const user = await response.json();
+      console.log("Got user from API:", user);
 
-      // Update local storage with user data
-      localStorage.setItem("walletAddress", walletAddress);
-      localStorage.setItem("userId", user.id.toString());
-      localStorage.setItem("referralCode", user.referralCode);
+      // Use the connect function from context
+      connect(walletAddress, user.id, user.referralCode);
 
       // Close the modal first
       onClose();
@@ -49,11 +49,6 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
         title: "Connection Successful",
         description: `Wallet ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)} connected! You can now use the Buy section to purchase tokens.`,
       });
-      
-      // Reload the entire page to refresh all state
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
     } catch (error) {
       console.error("Error connecting:", error);
       toast({
