@@ -64,6 +64,29 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
       setReferralCode(savedReferralCode);
     }
   }, []);
+  
+  // Fetch user balance when userId changes or on connect
+  useEffect(() => {
+    async function fetchUserBalance() {
+      if (userId) {
+        try {
+          const response = await apiRequest('GET', `/api/users/${userId}`);
+          const user = await response.json();
+          
+          if (user && user.walletBalance) {
+            setBalance(prev => ({
+              ...prev,
+              hack: parseFloat(user.walletBalance)
+            }));
+          }
+        } catch (error) {
+          console.error("Error fetching user balance:", error);
+        }
+      }
+    }
+    
+    fetchUserBalance();
+  }, [userId]);
 
   const connect = async () => {
     try {

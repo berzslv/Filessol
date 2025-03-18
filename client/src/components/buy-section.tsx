@@ -7,7 +7,7 @@ import { useLocation } from "wouter";
 import WalletModal from "@/components/wallet-modal";
 
 export default function BuySection() {
-  const { connected, userId, balance } = useWallet();
+  const { connected, userId, balance, connect } = useWallet();
   const [solAmount, setSolAmount] = useState<string>("");
   const [hackAmount, setHackAmount] = useState<string>("");
   const [txFee, setTxFee] = useState<string>("0");
@@ -177,6 +177,9 @@ export default function BuySection() {
           <div className="mb-6">
             <div className="flex justify-between items-center mb-2">
               <label className="text-gray-400 font-medium">You'll receive</label>
+              <div className="text-xs text-gray-400">
+                Balance: <span>{formatNumber(balance.hack)} HACK</span>
+              </div>
             </div>
             <div className="flex rounded-lg border border-gray-700 bg-zinc-900 p-3">
               <input 

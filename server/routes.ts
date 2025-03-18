@@ -328,15 +328,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         transactionHash: `tx_${Math.random().toString(36).substring(2, 15)}`
       });
       
-      // Update user's wallet balance
+      // Update user's wallet balance in our database
       // In a real application, this would be handled by the blockchain
       // Here we're simulating it in our database
       const currentBalance = user.walletBalance ? parseFloat(user.walletBalance.toString()) : 0;
       const newBalance = currentBalance + hackAmount;
       
-      // We'd update the user's wallet balance here
-      // In a real implementation, we'd have a method to update user fields
-      // For now, we'll respond with the new balance in the transaction data
+      // Update the user's wallet balance
+      const updatedUser = await storage.updateUserBalance(userId, newBalance.toString());
       
       return res.status(201).json({
         transaction,
@@ -380,6 +379,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.json(leaderboards);
     } catch (error) {
       console.error("Error fetching leaderboards:", error);
+      return res.status(500).json({ message: "Server error" });
+    }
+  });
+  
+  // Get user by ID
+  app.get("/api/users/:id", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      return res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
       return res.status(500).json({ message: "Server error" });
     }
   });

@@ -231,13 +231,14 @@ export class MemStorage implements IStorage {
   }
 
   private initializeMockData() {
-    // Create some users with wallet addresses
+    // Create some users with wallet addresses and initial balances
     const user1 = this.createUser({
       username: 'user1',
       password: 'password123',
       walletAddress: '0xab...cd12',
       referralCode: 'REF001',
-      referredBy: null
+      referredBy: null,
+      walletBalance: '5000'
     });
 
     const user2 = this.createUser({
@@ -245,7 +246,8 @@ export class MemStorage implements IStorage {
       password: 'password123',
       walletAddress: '0x12...34ef',
       referralCode: 'REF002',
-      referredBy: 'REF001'
+      referredBy: 'REF001',
+      walletBalance: '2500'
     });
 
     const user3 = this.createUser({
@@ -253,7 +255,8 @@ export class MemStorage implements IStorage {
       password: 'password123',
       walletAddress: '0x56...78gh',
       referralCode: 'REF003',
-      referredBy: 'REF001'
+      referredBy: 'REF001',
+      walletBalance: '3750'
     });
 
     const user4 = this.createUser({
@@ -261,7 +264,8 @@ export class MemStorage implements IStorage {
       password: 'password123',
       walletAddress: '0x45...67ab',
       referralCode: 'REF004',
-      referredBy: 'REF002'
+      referredBy: 'REF002',
+      walletBalance: '8250'
     });
 
     const user5 = this.createUser({
@@ -269,7 +273,8 @@ export class MemStorage implements IStorage {
       password: 'password123',
       walletAddress: '0xcd...ef89',
       referralCode: 'REF005',
-      referredBy: 'REF003'
+      referredBy: 'REF003',
+      walletBalance: '6400'
     });
 
     const user6 = this.createUser({
@@ -277,7 +282,8 @@ export class MemStorage implements IStorage {
       password: 'password123',
       walletAddress: '0x01...23gh',
       referralCode: 'REF006',
-      referredBy: 'REF001'
+      referredBy: 'REF001',
+      walletBalance: '4800'
     });
 
     // Create staking records
