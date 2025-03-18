@@ -1,141 +1,70 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { apiRequest } from "./queryClient";
-import { useToast } from "@/hooks/use-toast";
+// lib/wallet.js
+import { useState, useEffect } from "react";
+import { Connection, PublicKey } from "@solana/web3.js";
+import WalletConnectProvider from "@walletconnect/client";
+import { useToast } from "@/hooks/use-toast";  // Assuming you have a custom toast hook
 
-interface WalletContextType {
-  connected: boolean;
-  address: string | null;
-  userId: number | null;
-  referralCode: string | null;
-  connect: (address: string, id: number, refCode: string) => void;
-  disconnect: () => void;
-  balance: {
-    sol: number;
-    hack: number;
-  };
-}
-
-const WalletContext = createContext<WalletContextType>({
-  connected: false,
-  address: null,
-  userId: null,
-  referralCode: null,
-  connect: () => {},
-  disconnect: () => {},
-  balance: {
-    sol: 0,
-    hack: 0
-  }
-});
-
-export const useWallet = () => useContext(WalletContext);
-
-interface WalletProviderProps {
-  children: ReactNode;
-}
-
-// Create PERSISTENT wallet state
-const getSavedWalletAddress = () => localStorage.getItem("walletAddress");
-const getSavedUserId = () => {
-  const id = localStorage.getItem("userId");
-  return id ? parseInt(id) : null;
-};
-const getSavedReferralCode = () => localStorage.getItem("referralCode");
-
-export const WalletProvider = ({ children }: WalletProviderProps) => {
-  // Initialize from localStorage immediately
-  const [connected, setConnected] = useState(() => !!getSavedWalletAddress());
-  const [address, setAddress] = useState<string | null>(() => getSavedWalletAddress());
-  const [userId, setUserId] = useState<number | null>(() => getSavedUserId());
-  const [referralCode, setReferralCode] = useState<string | null>(() => getSavedReferralCode());
-  
-  // Default SOL balance set higher for demo purposes
-  const [balance, setBalance] = useState({ sol: 25.0, hack: 0 });
+export function useWallet() {
+  const [connected, setConnected] = useState(false);
+  const [userId, setUserId] = useState<number | null>(null);
+  const [balance, setBalance] = useState({ sol: 0, hack: 0 });
+  const [publicKey, setPublicKey] = useState<PublicKey | null>(null);
   const { toast } = useToast();
-  
-  // Fetch user balance when userId changes or on connect
-  useEffect(() => {
-    async function fetchUserBalance() {
-      if (userId) {
-        try {
-          console.log("Fetching balance for user ID:", userId);
-          const response = await apiRequest('GET', `/api/users/${userId}`);
-          
-          if (!response.ok) {
-            console.error("Failed to fetch user data:", response.status);
-            return;
-          }
-          
-          const user = await response.json();
-          console.log("Got user data:", user);
-          
-          if (user && user.walletBalance) {
-            setBalance(prev => ({
-              ...prev,
-              hack: parseFloat(user.walletBalance)
-            }));
-          }
-        } catch (error) {
-          console.error("Error fetching user balance:", error);
-        }
-      }
+
+  const connectWallet = async () => {
+    try {
+      // Initialize WalletConnect provider
+      const provider = new WalletConnectProvider({
+        rpc: {
+          solana: "https://api.mainnet-beta.solana.com", // Solana RPC URL
+        },
+      });
+
+      // Enable WalletConnect session
+      await provider.enable();
+
+      // Get connected account
+      const accounts = provider.accounts;
+      const account = accounts[0]; // First connected wallet address
+      console.log("Connected wallet:", account);
+
+      // Set public key
+      const pubKey = new PublicKey(account);
+      setPublicKey(pubKey);
+      setConnected(true);
+
+      // Fetch the SOL balance of the wallet
+      const connection = new Connection("https://api.mainnet-beta.solana.com", "confirmed");
+      const solBalance = await connection.getBalance(pubKey);
+      const formattedSolBalance = solBalance / 1e9;  // Convert lamports to SOL
+      setBalance({ sol: formattedSolBalance, hack: 0 }); // Assuming HACK balance is 0 for now
+
+      // You can set userId or other logic based on your app's requirements
+      setUserId(1);  // Example: Use logic for your user ID
+
+    } catch (error) {
+      console.error("Failed to connect wallet:", error);
+      toast({
+        title: "Connection Failed",
+        description: "Unable to connect to your wallet. Please try again.",
+        variant: "destructive",
+      });
     }
-    
-    fetchUserBalance();
-  }, [userId]);
-  
-  // Direct connect function that can be called from modal
-  const connect = (walletAddress: string, id: number, refCode: string) => {
-    console.log(`Connecting wallet: address=${walletAddress}, id=${id}, refCode=${refCode}`);
-    
-    // Update state
-    setAddress(walletAddress);
-    setUserId(id);
-    setReferralCode(refCode);
-    setConnected(true);
-    
-    // This ensures localStorage is set properly
-    localStorage.setItem("walletAddress", walletAddress);
-    localStorage.setItem("userId", id.toString());
-    localStorage.setItem("referralCode", refCode);
-    
-    console.log("Wallet connected, localStorage set");
   };
 
-  const disconnect = () => {
-    setAddress(null);
-    setUserId(null);
-    setReferralCode(null);
+  const disconnectWallet = () => {
     setConnected(false);
-    
-    // Clear localStorage
-    localStorage.removeItem("walletAddress");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("referralCode");
-    
-    // Reset balance
-    setBalance({ sol: 25.0, hack: 0 });
-    
-    toast({
-      title: "Wallet Disconnected",
-      description: "Your wallet has been disconnected",
-    });
-    
-    // Reload the page to ensure all state is reset cleanly
-    window.location.reload();
+    setUserId(null);
+    setBalance({ sol: 0, hack: 0 });
+    setPublicKey(null);
   };
 
-  return (
-    React.createElement(WalletContext.Provider, {
-      value: {
-        connected,
-        address,
-        userId,
-        referralCode,
-        connect,
-        disconnect,
-        balance
-      }
-    }, children)
-  );
-};
+  return {
+    connected,
+    connectWallet,
+    disconnectWallet,
+    userId,
+    balance,
+    publicKey,
+  };
+}
