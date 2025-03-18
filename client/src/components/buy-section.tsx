@@ -4,6 +4,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { formatNumber } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import WalletModal from "@/components/wallet-modal";
 
 export default function BuySection() {
   const { connected, userId, balance } = useWallet();
@@ -13,6 +14,7 @@ export default function BuySection() {
   const [referralBonus, setReferralBonus] = useState<string>("0");
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [walletModalOpen, setWalletModalOpen] = useState(false);
   const { toast } = useToast();
   const [location] = useLocation();
 
@@ -56,13 +58,18 @@ export default function BuySection() {
     setSolAmount(value);
   };
 
+  const openWalletModal = () => {
+    setWalletModalOpen(true);
+  };
+
+  const closeWalletModal = () => {
+    setWalletModalOpen(false);
+  };
+
   const handleBuyClick = async () => {
     if (!connected) {
-      toast({
-        title: "Wallet Not Connected",
-        description: "Please connect your wallet to buy tokens",
-        variant: "destructive"
-      });
+      // Open wallet modal instead of showing toast
+      openWalletModal();
       return;
     }
 
@@ -206,7 +213,7 @@ export default function BuySection() {
           <button 
             className="w-full bg-[#ff3e00] text-white font-bold py-3 px-4 rounded-lg hover:bg-opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
             onClick={handleBuyClick}
-            disabled={!connected || loading || !solAmount || parseFloat(solAmount) <= 0}
+            disabled={loading || (!connected && !solAmount) || (connected && (!solAmount || parseFloat(solAmount) <= 0))}
           >
             {loading ? (
               <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -214,10 +221,16 @@ export default function BuySection() {
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
             ) : null}
-            <span>Buy HACK</span>
+            <span>{connected ? "Buy HACK" : "Connect Wallet to Buy"}</span>
           </button>
         </div>
       </div>
+
+      {/* Wallet Modal */}
+      <WalletModal 
+        isOpen={walletModalOpen} 
+        onClose={closeWalletModal} 
+      />
     </section>
   );
 }

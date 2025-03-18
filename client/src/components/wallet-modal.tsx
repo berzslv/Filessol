@@ -28,15 +28,15 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
 
   const handlePhantomClick = () => {
     toast({
-      title: "Wallet Not Available",
-      description: "Phantom wallet integration is not available in this demo. Please use WalletConnect.",
+      title: "Use WalletConnect Instead",
+      description: "Please use WalletConnect to connect your Phantom wallet for the best experience.",
     });
   };
 
   const handleSolflareClick = () => {
     toast({
-      title: "Wallet Not Available",
-      description: "Solflare wallet integration is not available in this demo. Please use WalletConnect.",
+      title: "Use WalletConnect Instead",
+      description: "Please use WalletConnect to connect your Solflare wallet for the best experience.",
     });
   };
 
