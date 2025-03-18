@@ -10,6 +10,7 @@ interface WalletContextType {
   userId: number | null;
   referralCode: string | null;
   connect: () => Promise<void>;
+  connectWithDemoWallet: (address: string) => Promise<void>;
   disconnect: () => void;
   balance: {
     sol: number;
@@ -23,6 +24,7 @@ const WalletContext = createContext<WalletContextType>({
   userId: null,
   referralCode: null,
   connect: async () => {},
+  connectWithDemoWallet: async () => {},
   disconnect: () => {},
   balance: {
     sol: 0,
@@ -180,6 +182,57 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
     }
   };
 
+  // Demo wallet connection (for development/testing)
+  const connectWithDemoWallet = async (walletAddress: string) => {
+    try {
+      // Get URL params to check for referral
+      const urlParams = new URLSearchParams(window.location.search);
+      const refParam = urlParams.get('ref');
+      
+      // Check if we're on a referral URL path
+      const pathMatch = window.location.pathname.match(/\/ref\/([A-Za-z0-9]+)/);
+      const refFromPath = pathMatch ? pathMatch[1] : null;
+      
+      const referredBy = refParam || refFromPath || null;
+      
+      // Call the API to create or get user
+      const response = await apiRequest('POST', '/api/users', {
+        walletAddress,
+        referredBy
+      });
+      
+      const user = await response.json();
+      
+      setAddress(walletAddress);
+      setUserId(user.id);
+      setReferralCode(user.referralCode);
+      setConnected(true);
+      
+      // Save to localStorage
+      localStorage.setItem("walletAddress", walletAddress);
+      localStorage.setItem("userId", user.id.toString());
+      localStorage.setItem("referralCode", user.referralCode);
+      
+      // Set starting balance
+      setBalance({
+        sol: 14.5,
+        hack: user.walletBalance ? parseFloat(user.walletBalance) : 0
+      });
+      
+      toast({
+        title: "Demo Wallet Connected",
+        description: `Successfully connected to ${walletAddress}`,
+      });
+    } catch (error) {
+      console.error("Error connecting demo wallet:", error);
+      toast({
+        variant: "destructive",
+        title: "Connection Error",
+        description: "Failed to connect demo wallet. Please try again.",
+      });
+    }
+  };
+
   const disconnect = () => {
     if (provider) {
       // Close WalletConnect session if it exists
@@ -214,6 +267,7 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
         userId,
         referralCode,
         connect,
+        connectWithDemoWallet,
         disconnect,
         balance
       }
