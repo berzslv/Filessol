@@ -1,3 +1,5 @@
+// wallet.ts
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { apiRequest } from "./queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -43,22 +45,18 @@ const getSavedUserId = () => {
 const getSavedReferralCode = () => localStorage.getItem("referralCode");
 
 export const WalletProvider = ({ children }: WalletProviderProps) => {
-  // Initialize from localStorage immediately
   const [connected, setConnected] = useState(() => !!getSavedWalletAddress());
   const [address, setAddress] = useState<string | null>(() => getSavedWalletAddress());
   const [userId, setUserId] = useState<number | null>(() => getSavedUserId());
   const [referralCode, setReferralCode] = useState<string | null>(() => getSavedReferralCode());
   
-  // Default SOL balance set higher for demo purposes
   const [balance, setBalance] = useState({ sol: 25.0, hack: 0 });
   const { toast } = useToast();
   
-  // Fetch user balance when userId changes or on connect
   useEffect(() => {
     async function fetchUserBalance() {
       if (userId) {
         try {
-          console.log("Fetching balance for user ID:", userId);
           const response = await apiRequest('GET', `/api/users/${userId}`);
           
           if (!response.ok) {
@@ -67,8 +65,6 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
           }
           
           const user = await response.json();
-          console.log("Got user data:", user);
-          
           if (user && user.walletBalance) {
             setBalance(prev => ({
               ...prev,
@@ -84,22 +80,15 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
     fetchUserBalance();
   }, [userId]);
   
-  // Direct connect function that can be called from modal
   const connect = (walletAddress: string, id: number, refCode: string) => {
-    console.log(`Connecting wallet: address=${walletAddress}, id=${id}, refCode=${refCode}`);
-    
-    // Update state
     setAddress(walletAddress);
     setUserId(id);
     setReferralCode(refCode);
     setConnected(true);
     
-    // This ensures localStorage is set properly
     localStorage.setItem("walletAddress", walletAddress);
     localStorage.setItem("userId", id.toString());
     localStorage.setItem("referralCode", refCode);
-    
-    console.log("Wallet connected, localStorage set");
   };
 
   const disconnect = () => {
@@ -108,12 +97,10 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
     setReferralCode(null);
     setConnected(false);
     
-    // Clear localStorage
     localStorage.removeItem("walletAddress");
     localStorage.removeItem("userId");
     localStorage.removeItem("referralCode");
     
-    // Reset balance
     setBalance({ sol: 25.0, hack: 0 });
     
     toast({
@@ -121,22 +108,11 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
       description: "Your wallet has been disconnected",
     });
     
-    // Reload the page to ensure all state is reset cleanly
     window.location.reload();
   };
 
   return (
-    <WalletContext.Provider
-      value={{
-        connected,
-        address,
-        userId,
-        referralCode,
-        connect,
-        disconnect,
-        balance
-      }}
-    >
+    <WalletContext.Provider value={{ connected, address, userId, referralCode, connect, disconnect, balance }}>
       {children}
     </WalletContext.Provider>
   );
