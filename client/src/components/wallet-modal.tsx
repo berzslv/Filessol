@@ -17,20 +17,23 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
   const [loading, setLoading] = useState(false);
 
   // Function to directly connect to the backend with a wallet address
-  const connectDirectly = async () => {
-    if (!walletAddress.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Input Required",
-        description: "Please enter a wallet address to continue",
-      });
-      return;
-    }
-
+  const connectWithWalletConnect = async () => {
     setLoading(true);
 
     try {
-      // Clear any existing user data from localStorage to prevent stale data
+      const provider = new WalletConnectProvider({
+        projectId: "ff609a49d6c93e17be4b9c69f43d4e64"
+      });
+      
+      await provider.enable();
+      const accounts = await provider.request({ method: 'eth_accounts' });
+      const walletAddress = accounts[0];
+
+      if (!walletAddress) {
+        throw new Error('No wallet address found');
+      }
+
+      // Clear any existing user data from localStorage
       localStorage.removeItem("walletAddress");
       localStorage.removeItem("userId");
       localStorage.removeItem("referralCode");
@@ -95,7 +98,7 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
             </button>
           </div>
           <DialogDescription className="text-gray-400">
-            Enter any wallet address to connect in demo mode
+            Connect your wallet using WalletConnect
           </DialogDescription>
         </DialogHeader>
 
@@ -120,7 +123,7 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
           
           <button
             className="w-full px-4 py-3 rounded-md bg-[#ff3e00] text-white font-bold hover:bg-opacity-90 transition flex justify-center items-center"
-            onClick={connectDirectly}
+            onClick={connectWithWalletConnect}
             disabled={loading}
           >
             {loading ? (
