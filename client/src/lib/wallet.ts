@@ -126,8 +126,8 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   };
 
   return (
-    React.createElement(WalletContext.Provider, {
-      value: {
+    <WalletContext.Provider
+      value={{
         connected,
         address,
         userId,
@@ -135,7 +135,9 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
         connect,
         disconnect,
         balance
-      }
-    }, children)
+      }}
+    >
+      {children}
+    </WalletContext.Provider>
   );
 };
