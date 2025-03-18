@@ -39,7 +39,8 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   const [address, setAddress] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
   const [referralCode, setReferralCode] = useState<string | null>(null);
-  const [balance, setBalance] = useState({ sol: 14.5, hack: 0 });
+  // Default SOL balance set higher for demo purposes
+  const [balance, setBalance] = useState({ sol: 25.0, hack: 0 });
   const { toast } = useToast();
 
   // Initialize from localStorage if available
@@ -103,7 +104,7 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
     localStorage.removeItem("referralCode");
     
     // Reset balance
-    setBalance({ sol: 14.5, hack: 0 });
+    setBalance({ sol: 25.0, hack: 0 });
     
     toast({
       title: "Wallet Disconnected",

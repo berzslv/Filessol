@@ -41,13 +41,19 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
       localStorage.setItem("userId", user.id.toString());
       localStorage.setItem("referralCode", user.referralCode);
 
-      // Reload the entire page to refresh all state
-      window.location.reload();
+      // Close the modal first
+      onClose();
       
+      // Show a success confirmation
       toast({
-        title: "Connected Successfully",
-        description: `Wallet ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)} connected`,
+        title: "Connection Successful",
+        description: `Wallet ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)} connected! You can now use the Buy section to purchase tokens.`,
       });
+      
+      // Reload the entire page to refresh all state
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
     } catch (error) {
       console.error("Error connecting:", error);
       toast({

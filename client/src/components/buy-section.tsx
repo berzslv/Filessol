@@ -67,7 +67,7 @@ export default function BuySection() {
   };
 
   const handleBuyClick = async () => {
-    if (!connected) {
+    if (!connected || !userId) {
       // Open wallet modal instead of showing toast
       openWalletModal();
       return;
@@ -109,8 +109,13 @@ export default function BuySection() {
         });
       }
 
-      // Reset form
+      // Reset form and reload the page after a delay to update the wallet balance
       setSolAmount("");
+      
+      // Wait a moment so the user can see the success message, then reload
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
     } catch (error) {
       console.error("Error buying tokens:", error);
       toast({
@@ -234,7 +239,7 @@ export default function BuySection() {
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
             ) : null}
-            <span>{connected ? "Buy HACK" : "Connect Wallet to Buy"}</span>
+            <span>{connected && userId ? "Buy HACK" : "Connect Wallet to Buy"}</span>
           </button>
         </div>
       </div>

@@ -42,6 +42,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if user already exists
       const existingUser = await storage.getUserByWalletAddress(walletAddress);
       if (existingUser) {
+        console.log("Returning existing user:", existingUser);
         return res.json(existingUser);
       }
       
@@ -57,8 +58,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const username = `user_${Math.random().toString(36).substring(2, 10)}`;
       const referralCode = `REF${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
       
-      // Set an initial wallet balance for new users
-      const initialBalance = "500"; // Initial HACK token balance for new users
+      // Set initial balances for new users
+      const initialHackBalance = "500"; // Initial HACK token balance for new users
       
       const newUser = await storage.createUser({
         username,
@@ -66,7 +67,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         walletAddress,
         referralCode,
         referredBy: referredBy || null,
-        walletBalance: initialBalance
+        walletBalance: initialHackBalance
       });
       
       // If user was referred, create a referral record
@@ -81,6 +82,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      console.log("Created new user:", newUser);
       return res.status(201).json(newUser);
     } catch (error) {
       console.error("Error creating user:", error);
