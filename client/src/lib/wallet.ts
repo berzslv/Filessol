@@ -112,7 +112,18 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   };
 
   return (
-    <WalletContext.Provider value={{ connected, address, userId, referralCode, connect, disconnect, balance }}>
+    // Ensure proper return of JSX
+    <WalletContext.Provider
+      value={{
+        connected,
+        address,
+        userId,
+        referralCode,
+        connect,
+        disconnect,
+        balance
+      }}
+    >
       {children}
     </WalletContext.Provider>
   );
