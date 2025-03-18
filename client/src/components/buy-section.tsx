@@ -7,7 +7,26 @@ import { useLocation } from "wouter";
 import WalletModal from "@/components/wallet-modal";
 
 export default function BuySection() {
-  const { connected, userId, balance, connect } = useWallet();
+  // Force component to update when wallet status changes with localStorage check
+  const { connected, userId, balance } = useWallet();
+  const [walletConnected, setWalletConnected] = useState(connected);
+  const [localUserId, setLocalUserId] = useState<number | null>(userId);
+  
+  // Update when connected prop changes or localStorage changes
+  useEffect(() => {
+    const walletInStorage = localStorage.getItem("walletAddress") !== null;
+    const userIdInStorage = localStorage.getItem("userId");
+    
+    setWalletConnected(connected || walletInStorage);
+    
+    if (userIdInStorage && !localUserId) {
+      setLocalUserId(parseInt(userIdInStorage));
+    }
+    
+    console.log("BuySection wallet status:", 
+      { connected, storageHasWallet: walletInStorage, userId, localUserId });
+  }, [connected, userId, localUserId]);
+  
   const [solAmount, setSolAmount] = useState<string>("");
   const [hackAmount, setHackAmount] = useState<string>("");
   const [txFee, setTxFee] = useState<string>("0");
@@ -67,7 +86,10 @@ export default function BuySection() {
   };
 
   const handleBuyClick = async () => {
-    if (!connected || !userId) {
+    // Determine if we have a valid user ID (either from context or localStorage)
+    const effectiveUserId = userId || localUserId;
+    
+    if (!walletConnected || !effectiveUserId) {
       // Open wallet modal instead of showing toast
       openWalletModal();
       return;
@@ -86,7 +108,7 @@ export default function BuySection() {
 
     try {
       const response = await apiRequest("POST", "/api/buy", {
-        userId,
+        userId: effectiveUserId,
         solAmount: parseFloat(solAmount),
         hackAmount: parseFloat(hackAmount),
         referralCode: referralCode || undefined
@@ -231,7 +253,7 @@ export default function BuySection() {
           <button 
             className="w-full bg-[#ff3e00] text-white font-bold py-3 px-4 rounded-lg hover:bg-opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
             onClick={handleBuyClick}
-            disabled={loading || (!connected && !solAmount) || (connected && (!solAmount || parseFloat(solAmount) <= 0))}
+            disabled={loading || (!walletConnected && !solAmount) || (walletConnected && (!solAmount || parseFloat(solAmount) <= 0))}
           >
             {loading ? (
               <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -239,7 +261,7 @@ export default function BuySection() {
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
             ) : null}
-            <span>{connected && userId ? "Buy HACK" : "Connect Wallet to Buy"}</span>
+            <span>{walletConnected && (userId || localUserId) ? "Buy HACK" : "Connect Wallet to Buy"}</span>
           </button>
         </div>
       </div>
