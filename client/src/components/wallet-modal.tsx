@@ -30,13 +30,26 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
     setLoading(true);
 
     try {
+      // Clear any existing user data from localStorage to prevent stale data
+      localStorage.removeItem("walletAddress");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("referralCode");
+      
       // Call the API to register/get the user
       const response = await apiRequest("POST", "/api/users", {
         walletAddress: walletAddress.trim(),
       });
 
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+      }
+
       const user = await response.json();
       console.log("Got user from API:", user);
+
+      if (!user || !user.id) {
+        throw new Error("Invalid user data received from server");
+      }
 
       // Use the connect function from context
       connect(walletAddress, user.id, user.referralCode);
@@ -49,6 +62,11 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
         title: "Connection Successful",
         description: `Wallet ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)} connected! You can now use the Buy section to purchase tokens.`,
       });
+      
+      // Force reload the page to ensure all components pick up the new wallet state
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     } catch (error) {
       console.error("Error connecting:", error);
       toast({
@@ -56,6 +74,11 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
         title: "Connection Error",
         description: "Failed to connect. Please try again.",
       });
+      
+      // Clear any partial state
+      localStorage.removeItem("walletAddress");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("referralCode");
     } finally {
       setLoading(false);
     }
